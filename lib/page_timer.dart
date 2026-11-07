@@ -75,6 +75,15 @@ class TimerNotifier extends StateNotifier<TimerState> {
     );
   }
 
+  void setDuration(Duration duration) {
+    _timer?.cancel();
+    state = state.copyWith(
+      totalDuration: duration,
+      elapsed: Duration.zero,
+      isRunning: false,
+    );
+  }
+
   void startOrPause() {
     if (state.isRunning) {
       _pause();
@@ -108,11 +117,6 @@ class TimerNotifier extends StateNotifier<TimerState> {
     state = state.copyWith(isRunning: false);
   }
 
-  void stop() {
-    _timer?.cancel();
-    state = state.copyWith(isRunning: false);
-  }
-
   void reset() {
     _timer?.cancel();
     state = state.copyWith(
@@ -135,18 +139,99 @@ final timerProvider = StateNotifierProvider<TimerNotifier, TimerState>((ref) {
 class TimerPage extends ConsumerWidget {
   const TimerPage({super.key});
 
-  String _formatDuration(Duration duration) {
+  Widget _buildTimeDisplay(Duration duration, double fontSize) {
     final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     final millis =
         (duration.inMilliseconds.remainder(1000) ~/ 10).toString().padLeft(2, '0');
-    return '$minutes:$seconds:$millis';
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          '$minutes:$seconds',
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          ':$millis',
+          style: TextStyle(
+            fontSize: fontSize * 0.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showSetTimeDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(tr(ref, 'set_time')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('30 seconds'),
+                onTap: () {
+                  ref
+                      .read(timerProvider.notifier)
+                      .setDuration(const Duration(seconds: 30));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('1 minute'),
+                onTap: () {
+                  ref
+                      .read(timerProvider.notifier)
+                      .setDuration(const Duration(minutes: 1));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('2 minutes'),
+                onTap: () {
+                  ref
+                      .read(timerProvider.notifier)
+                      .setDuration(const Duration(minutes: 2));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('5 minutes'),
+                onTap: () {
+                  ref
+                      .read(timerProvider.notifier)
+                      .setDuration(const Duration(minutes: 5));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final timerState = ref.watch(timerProvider);
     final notifier = ref.read(timerProvider.notifier);
+
+    final screenSize = MediaQuery.sizeOf(context);
+    final smallerSide = screenSize.width < screenSize.height ? screenSize.width : screenSize.height;
+    final circleSize = smallerSide * 0.8;
+    final fontSize = circleSize * 0.12;
+
+    final startButtonSize = smallerSide * 0.18;
+    final resetButtonSize = startButtonSize * 0.75;
 
     return Column(
       children: [
@@ -171,17 +256,17 @@ class TimerPage extends ConsumerWidget {
         ),
         const Spacer(),
         SizedBox(
-          width: 240,
-          height: 240,
+          width: circleSize,
+          height: circleSize,
           child: Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 240,
-                height: 240,
+                width: circleSize,
+                height: circleSize,
                 child: CircularProgressIndicator(
                   value: timerState.progress,
-                  strokeWidth: 12,
+                  strokeWidth: circleSize * 0.04,
                   backgroundColor: Theme.of(context)
                       .colorScheme
                       .primary
@@ -189,12 +274,20 @@ class TimerPage extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              Text(
-                _formatDuration(timerState.remaining),
-                style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildTimeDisplay(timerState.remaining, fontSize),
+                  if (timerState.type == TimerType.countdown) ...[
+                    const SizedBox(height: 12),
+                    MyButton(
+                      icon: Icons.timer,
+                      text: tr(ref, 'set_time'),
+                      onPressed: () => _showSetTimeDialog(context, ref),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -203,23 +296,18 @@ class TimerPage extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              AppButton(
+              const SizedBox(width: 24),
+              MyRoundButton(
+                size: startButtonSize,
                 icon: timerState.isRunning ? Icons.pause : Icons.play_arrow,
-                text: timerState.isRunning
-                    ? tr(ref, 'pause')
-                    : tr(ref, 'start'),
                 onPressed: () => notifier.startOrPause(),
               ),
-              AppButton(
-                icon: Icons.stop,
-                text: tr(ref, 'stop'),
-                onPressed: () => notifier.stop(),
-              ),
-              AppButton(
+              const SizedBox(width: 24),
+              MyRoundButton(
+                size: resetButtonSize,
                 icon: Icons.refresh,
-                text: tr(ref, 'reset'),
                 onPressed: () => notifier.reset(),
               ),
             ],

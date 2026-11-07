@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'page_counter.dart';
+import 'page_main.dart';
 import 'page_settings.dart';
 import 'page_timer.dart';
 import 'page_workouts.dart';

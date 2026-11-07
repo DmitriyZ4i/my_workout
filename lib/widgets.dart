@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AppButton extends StatelessWidget {
+class MyButton extends StatelessWidget {
   final String? text;
   final IconData? icon;
   final VoidCallback? onPressed;
@@ -12,7 +12,7 @@ class AppButton extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double? iconSize;
 
-  const AppButton({
+  const MyButton({
     super.key,
     this.text,
     this.icon,
@@ -26,7 +26,7 @@ class AppButton extends StatelessWidget {
     this.iconSize,
   }) : assert(
           text != null || icon != null,
-          'AppButton must have at least text or icon',
+          'MyButton must have at least text or icon',
         );
 
   @override
@@ -96,6 +96,58 @@ class AppButton extends StatelessWidget {
       ),
       onPressed: onPressed,
       child: childWidget,
+    );
+  }
+}
+
+class MyRoundButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final Color? borderColor;
+  final double borderWidth;
+  final double size;
+  final double? iconSize;
+
+  const MyRoundButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    this.backgroundColor,
+    this.iconColor,
+    this.borderColor,
+    this.borderWidth = 1.0,
+    required this.size,
+    this.iconSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final effectiveBorderColor = borderColor ?? theme.colorScheme.outline;
+    final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: backgroundColor ?? Colors.transparent,
+          padding: EdgeInsets.zero,
+          side: BorderSide(
+            color: effectiveBorderColor,
+            width: borderWidth,
+          ),
+          shape: const CircleBorder(),
+        ),
+        onPressed: onPressed,
+        child: Icon(
+          icon,
+          size: iconSize ?? (size * 0.45),
+          color: effectiveIconColor,
+        ),
+      ),
     );
   }
 }

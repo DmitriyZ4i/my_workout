@@ -24,7 +24,7 @@ class CounterPage extends ConsumerWidget {
             style: Theme.of(context).textTheme.displayMedium,
           ),
           const SizedBox(height: 24),
-          AppButton(
+          MyButton(
             icon: Icons.add,
             text: tr(ref, 'counter'),
             onPressed: () => ref.read(counterProvider.notifier).state++,
