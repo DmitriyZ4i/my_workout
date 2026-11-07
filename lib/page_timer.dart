@@ -169,52 +169,134 @@ class TimerPage extends ConsumerWidget {
   }
 
   void _showSetTimeDialog(BuildContext context, WidgetRef ref) {
+    final currentDuration = ref.read(timerProvider).totalDuration;
+    int selectedMinutes = currentDuration.inMinutes.remainder(60);
+    int selectedSeconds = currentDuration.inSeconds.remainder(60);
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(tr(ref, 'set_time')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('30 seconds'),
-                onTap: () {
-                  ref
-                      .read(timerProvider.notifier)
-                      .setDuration(const Duration(seconds: 30));
-                  Navigator.pop(context);
-                },
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Center(child: Text(tr(ref, 'set_time'))),
+              content: SizedBox(
+                height: 180,
+                width: 260,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const Text('Min', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: ListWheelScrollView.useDelegate(
+                              itemExtent: 38,
+                              perspective: 0.005,
+                              diameterRatio: 1.2,
+                              physics: const FixedExtentScrollPhysics(),
+                              controller: FixedExtentScrollController(
+                                initialItem: selectedMinutes,
+                              ),
+                              onSelectedItemChanged: (index) {
+                                setState(() {
+                                  selectedMinutes = index;
+                                });
+                              },
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                childCount: 60,
+                                builder: (context, index) {
+                                  return Center(
+                                    child: Text(
+                                      index.toString().padLeft(2, '0'),
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: index == selectedMinutes
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: index == selectedMinutes
+                                            ? Theme.of(context).colorScheme.primary
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Text(':', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const Text('Sec', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: ListWheelScrollView.useDelegate(
+                              itemExtent: 38,
+                              perspective: 0.005,
+                              diameterRatio: 1.2,
+                              physics: const FixedExtentScrollPhysics(),
+                              controller: FixedExtentScrollController(
+                                initialItem: selectedSeconds,
+                              ),
+                              onSelectedItemChanged: (index) {
+                                setState(() {
+                                  selectedSeconds = index;
+                                });
+                              },
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                childCount: 60,
+                                builder: (context, index) {
+                                  return Center(
+                                    child: Text(
+                                      index.toString().padLeft(2, '0'),
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: index == selectedSeconds
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: index == selectedSeconds
+                                            ? Theme.of(context).colorScheme.primary
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              ListTile(
-                title: const Text('1 minute'),
-                onTap: () {
-                  ref
-                      .read(timerProvider.notifier)
-                      .setDuration(const Duration(minutes: 1));
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('2 minutes'),
-                onTap: () {
-                  ref
-                      .read(timerProvider.notifier)
-                      .setDuration(const Duration(minutes: 2));
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('5 minutes'),
-                onTap: () {
-                  ref
-                      .read(timerProvider.notifier)
-                      .setDuration(const Duration(minutes: 5));
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final newDuration = Duration(
+                      minutes: selectedMinutes,
+                      seconds: selectedSeconds,
+                    );
+                    if (newDuration.inSeconds > 0) {
+                      ref.read(timerProvider.notifier).setDuration(newDuration);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
